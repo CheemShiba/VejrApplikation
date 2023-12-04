@@ -1,0 +1,93 @@
+import requests
+import pygame
+from math import radians, sin, cos
+from pygame.locals import *
+
+# Vindretning og cirkelposition
+wind = None
+position = None
+
+# Variabler til vejrdata
+angle = 0.0
+windmag = 0.0
+city = "Valby"
+
+# Bredde og højde på vinduet
+width = 800
+height = 400
+
+# Initialisering af Pygame
+pygame.init()
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption('Vindsimulator')
+
+# Font til tekst i vinduet
+font = pygame.font.SysFont("Arial", 36)
+
+def setup():
+    global wind, position, angle, windmag, json
+
+    # Aflæs data fra api.weatherstack.com for den givne by
+    url = f"http://api.weatherstack.com/current?access_key=cbde3b9484c7977188ba5fcb72d40eb3&query={city}"
+    response = requests.get(url)
+    print(response.json())
+    json = response.json()['current']
+    
+    # Initialiser cirklen i midten af vinduet
+    position = [width / 2, height / 2]
+
+    # Beregn vejret ud fra data i API'en
+    calc_weather(json)
+
+def calc_weather(json_data):
+    global wind, angle, windmag
+
+    # Aflæs vindretning og konverter til radianer
+    angle = radians(90 - float(json_data['wind_degree']))
+
+    # Aflæs vindhastighed
+    windmag = float(json_data['wind_speed']) / 3.6
+
+    # Lav en vektor ud fra vinklen
+    wind = [round(-windmag * cos(angle)), round(windmag * sin(angle))]
+
+def draw():
+    global position 
+    
+
+    # Tegn cirklen og vindretningen
+    screen.fill((200, 200, 200))
+    pygame.draw.circle(screen, (51, 51, 51), (round(position[0]), round(position[1])), 8)
+
+    # Flyt cirklen i vindens retning
+    position[0] += wind[0]
+    position[1] += wind[1]
+
+    # Flyt cirklen, når den når kanten af vinduet
+    if position[0] > width:
+        position[0] = 0
+    if position[0] < 0:
+        position[0] = width
+    if position[1] > height:
+        position[1] = 0
+    if position[1] < 0:
+        position[1] = height
+
+    # Vis vindhastighed og retning i vinduet
+    text = f"By: {city}  Retning: {json['wind_dir']}  Hastighed: {windmag:.2f} m/s"
+    text_surface = font.render(text, True, (0, 0, 0))
+    screen.blit(text_surface, (10, 50))
+
+    pygame.display.update()
+
+setup()
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            running = False
+
+    draw()  
+
+pygame.quit()

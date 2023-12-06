@@ -2,7 +2,7 @@ import requests
 
 # Hent data fra api.weatherstack.com for den givne by
 city = input("Hvilken by vil du se vejret for? ")
-url = f"http://api.weatherstack.com/current?access_key=cbde3b9484c7977188ba5fcb72d40eb3&query={city}"
+url = f"http://api.weatherstack.com/current?access_key=b5bddf65e34567a263baf6acdd37c039&query={city}"
 response = requests.get(url)
 
 print(type(response.json()))

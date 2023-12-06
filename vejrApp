@@ -1,5 +1,6 @@
 import requests
 import pygame
+from io import BytesIO
 from math import radians, sin, cos
 from pygame.locals import *
 
@@ -7,14 +8,15 @@ from pygame.locals import *
 wind = None
 position = None
 
+
 # Variabler til vejrdata
 angle = 0.0
 windmag = 0.0
-city = "Valby"
+city = input("Hvilken by vil du se vejret for? ")
 
 # Bredde og højde på vinduet
-width = 800
-height = 400
+width = 1600
+height = 800
 
 # Initialisering af Pygame
 pygame.init()
@@ -28,7 +30,7 @@ def setup():
     global wind, position, angle, windmag, json
 
     # Aflæs data fra api.weatherstack.com for den givne by
-    url = f"http://api.weatherstack.com/current?access_key=cbde3b9484c7977188ba5fcb72d40eb3&query={city}"
+    url = f"http://api.weatherstack.com/current?access_key=b5bddf65e34567a263baf6acdd37c039&query={city}"
     response = requests.get(url)
     print(response.json())
     json = response.json()['current']
@@ -38,9 +40,13 @@ def setup():
 
     # Beregn vejret ud fra data i API'en
     calc_weather(json)
+    
+    """
+    Weather_icon = pygame.image.load{json['weather_icons']}
+    """
 
 def calc_weather(json_data):
-    global wind, angle, windmag
+    global wind, angle, windmag, picture
 
     # Aflæs vindretning og konverter til radianer
     angle = radians(90 - float(json_data['wind_degree']))
@@ -49,10 +55,14 @@ def calc_weather(json_data):
     windmag = float(json_data['wind_speed']) / 3.6
 
     # Lav en vektor ud fra vinklen
-    wind = [round(-windmag * cos(angle)), round(windmag * sin(angle))]
+    wind = [round(windmag * cos(angle)), round(windmag * sin(angle))]
+
+    picture = json_data['weather_icons'][0]
+
+    
 
 def draw():
-    global position 
+    global position, picture
     
 
     # Tegn cirklen og vindretningen
@@ -74,11 +84,27 @@ def draw():
         position[1] = height
 
     # Vis vindhastighed og retning i vinduet
-    text = f"By: {city}  Retning: {json['wind_dir']}  Hastighed: {windmag:.2f} m/s"
+    text = f"By: {city}  Retning: {json['wind_dir']}  Hastighed: {windmag:.2f} m/s  Temp: {json['temperature']} Celsius  Tid: {json['observation_time']}"
     text_surface = font.render(text, True, (0, 0, 0))
     screen.blit(text_surface, (10, 50))
+    
+
+
+    """
+    if picture:
+        respons = requests.get(picture)
+        if respons.status_code == 200:
+            image_content = BytesIO(respons.content)
+            image = pygame.image.load(image_content)
+            screen.blit(image, (10, 100))
+        else:
+            print(f"Failed to fetch image. Status code: {respons.status_code}")
+    """
+
+    
 
     pygame.display.update()
+
 
 setup()
 
